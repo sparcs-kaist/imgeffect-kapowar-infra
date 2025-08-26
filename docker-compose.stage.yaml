@@ -1,0 +1,87 @@
+services:
+  next:
+    container_name: kapowar-stage-next
+    image: ghcr.io/sparcs-kaist/imgeffect-kapowar-stage
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - ${PORT:-3000}:3000
+    volumes:
+      - kapowar-stage-logs:/app/logs
+    environment:
+      TZ: Asia/Seoul
+      DATABASE_HOST: kapowar-stage-postgres
+      DATABASE_USER: ${DATABASE_USER:?}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      TRUST_PROXY: ${TRUST_PROXY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
+      AWS_REGION: ${AWS_REGION:?}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME:?}
+      AWS_CF_URL: ${AWS_CF_URL}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+      REDIS_URL: redis://kapowar-stage-redis
+      PM2_INSTANCES: ${PM2_INSTANCES}
+    labels:
+      - com.centurylinklabs.watchtower.scope=kapowar-stage
+
+  migrator:
+    container_name: kapowar-stage-migrator
+    image: ghcr.io/sparcs-kaist/imgeffect-kapowar-stage-migrator
+    environment:
+      TZ: Asia/Seoul
+      DATABASE_HOST: kapowar-stage-postgres
+      DATABASE_USER: ${DATABASE_USER:?}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
+    labels:
+      - com.centurylinklabs.watchtower.scope=kapowar-stage
+    command: "true"
+
+  postgres:
+    container_name: kapowar-stage-postgres
+    image: postgres:17-alpine
+    restart: unless-stopped
+    volumes:
+      - kapowar-stage-data:/var/lib/postgresql/data
+    environment:
+      TZ: Asia/Seoul
+      POSTGRES_USER: ${DATABASE_USER:?}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    container_name: kapowar-stage-redis
+    image: redis:8-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  watchtower:
+    container_name: kapowar-stage-watchtower
+    image: containrrr/watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TZ: Asia/Seoul
+    labels:
+      - com.centurylinklabs.watchtower.scope=kapowar-stage
+    command: --registry-auth --scope kapowar-stage --interval 30 --cleanup
+
+volumes:
+  kapowar-stage-data:
+    external: true
+  kapowar-stage-logs:
+    external: true
