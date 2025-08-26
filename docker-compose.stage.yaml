@@ -74,11 +74,12 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
     environment:
       TZ: Asia/Seoul
     labels:
       - com.centurylinklabs.watchtower.scope=kapowar-stage
-    command: --registry-auth --scope kapowar-stage --interval 30 --cleanup
+    command: --scope kapowar-stage --interval 30 --cleanup
 
 volumes:
   kapowar-stage-data:

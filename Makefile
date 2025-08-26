@@ -7,6 +7,7 @@ stage-down:
 	$(STAGE_COMPOSE) down
 
 stage-migrate:
+	$(STAGE_COMPOSE) pull migrator && \
 	@if $(STAGE_COMPOSE) ps --services --filter "status=running" | grep -q "^next$$"; then \
 		$(STAGE_COMPOSE) stop next; \
 	fi && \
