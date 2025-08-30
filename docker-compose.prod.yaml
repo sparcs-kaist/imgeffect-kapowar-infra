@@ -1,7 +1,7 @@
 services:
   next:
-    container_name: kapowar-stage-next
-    image: ghcr.io/sparcs-kaist/imgeffect-kapowar-stage
+    container_name: kapowar-next
+    image: ghcr.io/sparcs-kaist/imgeffect-kapowar
     restart: unless-stopped
     depends_on:
       postgres:
@@ -11,10 +11,10 @@ services:
     ports:
       - ${PORT:-3000}:3000
     volumes:
-      - kapowar-stage-logs:/app/logs
+      - kapowar-logs:/app/logs
     environment:
       TZ: Asia/Seoul
-      DATABASE_HOST: kapowar-stage-postgres
+      DATABASE_HOST: kapowar-postgres
       DATABASE_USER: ${DATABASE_USER:?}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
       JWT_SECRET: ${JWT_SECRET:?}
@@ -25,41 +25,49 @@ services:
       AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME:?}
       AWS_CF_URL: ${AWS_CF_URL}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
-      REDIS_URL: redis://kapowar-stage-redis
+      REDIS_URL: redis://kapowar-redis
       PM2_INSTANCES: ${PM2_INSTANCES}
     labels:
-      - com.centurylinklabs.watchtower.scope=kapowar-stage
+      - com.centurylinklabs.watchtower.scope=kapowar
 
   migrator:
-    container_name: kapowar-stage-migrator
-    image: ghcr.io/sparcs-kaist/imgeffect-kapowar-stage-migrator
+    container_name: kapowar-migrator
+    image: ghcr.io/sparcs-kaist/imgeffect-kapowar-migrator
     environment:
       TZ: Asia/Seoul
-      DATABASE_HOST: kapowar-stage-postgres
+      DATABASE_HOST: kapowar-postgres
       DATABASE_USER: ${DATABASE_USER:?}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
     labels:
-      - com.centurylinklabs.watchtower.scope=kapowar-stage
+      - com.centurylinklabs.watchtower.scope=kapowar
     command: "true"
 
   postgres:
-    container_name: kapowar-stage-postgres
-    image: postgres:17-alpine
+    container_name: kapowar-postgres
+    image: bitnami/postgresql:17
     restart: unless-stopped
+    ports:
+      - 5432:5432
     volumes:
-      - kapowar-stage-data:/var/lib/postgresql/data
+      - kapowar-data:/bitnami/postgresql
     environment:
-      TZ: Asia/Seoul
-      POSTGRES_USER: ${DATABASE_USER:?}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?}
+      POSTGRESQL_TIMEZONE: Asia/Seoul
+      POSTGRESQL_USERNAME: ${DATABASE_USER:?}
+      POSTGRESQL_PASSWORD: ${DATABASE_PASSWORD:?}
+      POSTGRESQL_DATABASE: ${DATABASE_USER:?}
+      POSTGRESQL_REPLICATION_MODE: ${DATABASE_REPL_MODE:-master}
+      POSTGRESQL_REPLICATION_USER: ${DATABASE_REPL_USER:?}
+      POSTGRESQL_REPLICATION_PASSWORD: ${DATABASE_REPL_PASSWORD:?}
+      POSTGRESQL_MASTER_HOST: ${DATABASE_REPL_HOST}
+      POSTGRESQL_LOG_HOSTNAME: yes
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
-    container_name: kapowar-stage-redis
+    container_name: kapowar-redis
     image: redis:8-alpine
     restart: unless-stopped
     healthcheck:
@@ -69,7 +77,7 @@ services:
       retries: 5
 
   watchtower:
-    container_name: kapowar-stage-watchtower
+    container_name: kapowar-watchtower
     image: containrrr/watchtower
     restart: unless-stopped
     volumes:
@@ -78,11 +86,11 @@ services:
     environment:
       TZ: Asia/Seoul
     labels:
-      - com.centurylinklabs.watchtower.scope=kapowar-stage
-    command: --scope kapowar-stage --interval 30 --cleanup
+      - com.centurylinklabs.watchtower.scope=kapowar
+    command: --scope kapowar --interval 30 --cleanup
 
 volumes:
-  kapowar-stage-data:
+  kapowar-data:
     external: true
-  kapowar-stage-logs:
+  kapowar-logs:
     external: true
