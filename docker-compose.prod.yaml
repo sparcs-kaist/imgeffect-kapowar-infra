@@ -44,24 +44,16 @@ services:
 
   postgres:
     container_name: kapowar-postgres
-    image: bitnami/postgresql:17
+    image: postgres:17-alpine
     restart: unless-stopped
-    ports:
-      - 5432:5432
     volumes:
-      - kapowar-data:/bitnami/postgresql
+      - kapowar-data:/var/lib/postgresql/data
     environment:
-      POSTGRESQL_TIMEZONE: Asia/Seoul
-      POSTGRESQL_USERNAME: ${DATABASE_USER:?}
-      POSTGRESQL_PASSWORD: ${DATABASE_PASSWORD:?}
-      POSTGRESQL_DATABASE: ${DATABASE_USER:?}
-      POSTGRESQL_REPLICATION_MODE: ${DATABASE_REPL_MODE:-master}
-      POSTGRESQL_REPLICATION_USER: ${DATABASE_REPL_USER:?}
-      POSTGRESQL_REPLICATION_PASSWORD: ${DATABASE_REPL_PASSWORD:?}
-      POSTGRESQL_MASTER_HOST: ${DATABASE_REPL_HOST}
-      POSTGRESQL_LOG_HOSTNAME: yes
+      TZ: Asia/Seoul
+      POSTGRES_USER: ${DATABASE_USER:?}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5

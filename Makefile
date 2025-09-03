@@ -6,8 +6,6 @@ help:
 	@echo "  prod-up        Start the production environment"
 	@echo "  prod-down      Stop the production environment"
 	@echo "  prod-migrate   Run database migrations in the production environment"
-	@echo "  prod-standby   Start the standby PostgreSQL instance"
-	@echo "  prod-failover  Promote the standby PostgreSQL instance"
 	@echo "  stage-up       Start the staging environment"
 	@echo "  stage-down     Stop the staging environment"
 	@echo "  stage-migrate  Run database migrations in the staging environment"
@@ -23,12 +21,6 @@ prod-migrate:
 	$(PROD_COMPOSE) stop next || true
 	$(PROD_COMPOSE) up postgres --wait -d
 	$(PROD_COMPOSE) run --rm migrator ./migrate.sh
-
-prod-standby:
-	$(PROD_COMPOSE) up postgres -d
-
-prod-failover:
-	$(PROD_COMPOSE) exec -T postgres pg_ctl -D /bitnami/postgresql/data promote
 
 stage-up:
 	$(STAGE_COMPOSE) up -d
