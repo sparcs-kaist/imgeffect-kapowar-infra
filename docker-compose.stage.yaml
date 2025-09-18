@@ -27,6 +27,7 @@ services:
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
       REDIS_URL: redis://kapowar-stage-redis
       PM2_INSTANCES: ${PM2_INSTANCES}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS}
     labels:
       - com.centurylinklabs.watchtower.scope=kapowar-stage
 
